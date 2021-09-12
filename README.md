@@ -3,14 +3,33 @@
 ## Description
 This package generates an Rest API for PostgreSQL.
 
-## Required Dependencies
+## Table of Contents
+* [Required Dependencies](#required-dependencies)
+* [Usage](#usage)
+* [API](#api)
+  * [Table Schema](#table-schema)
+  * [View Schema](#view-schema)
+  * [Command Schemas](#command-schemas)
+    * [Select](#command-select)
+    * [Insert](#command-insert)
+    * [Update](#command-update)
+    * [Delete](#command-delete)
+  * [Field Schema](#field)
+  * [Pagination](#pagination)
+* [Example](#example)
+  * [Insert Tables To Database](#insert-tables-to-database)
+  * [Define Schemas In Typescript](#define-schemas-in-typescript)
+  * [Result](#result)
+* [Testing](#testing)
+
+## <a name="required-dependencies"></a> Required Dependencies
 * Node v14+
 * Express (https://www.npmjs.com/package/express) // Server
 * Chalk (https://www.npmjs.com/package/chalk) // Better debugging on console
 * Pg (https://www.npmjs.com/package/pg) // PostgreSQL Official module
 * Express-Async-Wrapper (https://www.npmjs.com/package/express-async-wrapper) // Wrapping errors to errorHandler
 
-## Usage
+## <a name="usage"></a> Usage
 
 ```javascript
   // Import packages
@@ -75,8 +94,8 @@ This package generates an Rest API for PostgreSQL.
   
 ```
 
-## API
-### Table Schema
+## <a name="api"></a> API
+### <a name="table-schema"></a> Table Schema
 | Property        | Type           | Description | Required  |
 | :-------------: |:-------------:| :-----: | :-----:|
 | tableName      | string | PostgreSQL Table Name | ✅ |
@@ -87,7 +106,7 @@ This package generates an Rest API for PostgreSQL.
 | select | [SelectCommand](#command-select) | get route & get route/:id configuration | ❌ |
 | delete | [DeleteCommand](#command-delete) | delete route/:id configuration | ❌ |
 
-### View Schema
+### <a name="view-schema"></a> View Schema
 | Property        | Type           | Description | Required  |
 | :-------------: |:-------------:| :-----: | :-----:|
 | routeName      | string | Route name for express | ✅ |
@@ -96,7 +115,7 @@ This package generates an Rest API for PostgreSQL.
 | args | any[] | Query args | ❌ |
 | select | [SelectCommand](#command-select) | get route & get route/:id configuration | ❌ |
 
-### Command Schema's (Select, Insert, Update, Delete)
+### <a name="command-schemas"></a> Command Schemas (Select, Insert, Update, Delete)
 
 #### <a name="command-select"></a> Select
 | Property        | Type           | Description | Required  |
@@ -135,7 +154,7 @@ This package generates an Rest API for PostgreSQL.
 | name | string | Key of object | ✅ |
 | required | boolean | If this field required for insert/update | Default: false |
 
-### Pagination
+### <a name="pagination"></a> Pagination
 Select all route uses pagination default.
 Here are the querystring schema.
 
@@ -146,9 +165,9 @@ Here are the querystring schema.
 | orderby | string | Order column | table.primaryKey |
 | ordertype | 'ASC' or 'DESC' | Order type | 'DESC'
 
-## Example
+## <a name="example"></a> Example
 
-#### Insert tables to database
+#### <a name="insert-tables-to-database"></a> Insert tables to database
 ```sql
     CREATE TABLE users(
        user_id integer SERIAL PRIMARY KEY,
@@ -163,7 +182,7 @@ Here are the querystring schema.
     );
 ```
 
-#### Define schemas in typescript
+#### <a name="define-schemas-in-typescript"></a> Define schemas in typescript
 
 ```typescript
   // Define fields for insert/update operations.
@@ -240,7 +259,7 @@ server.use(`/api`, route);
 // Done.
 ```
 
-### Result
+### <a name="result"></a> Result
 | Method | Route | Description |
 | :---: | :---: | :---: |
 | GET | /api/users | Gets all users with pagination |
@@ -258,5 +277,5 @@ server.use(`/api`, route);
 | GET | /api/view/user_comments | Gets user-comment join data |
 | GET | /api/view/user_comments/1 | Gets user-comment join data where "user_id" = 1 | 
 
-## Testing
+## <a name="testing"></a> Testing
 Writed tests for body handling and key checks.
