@@ -1,5 +1,4 @@
-const path = require('path');
-const DotEnv = require('dotenv-webpack');
+const path = require('path'), webpack = require('webpack'), DotEnv = require('dotenv-webpack'), nodeExternals = require('webpack-node-externals');
 
 module.exports = {
     mode: 'production',
@@ -23,6 +22,10 @@ module.exports = {
         path: path.resolve(__dirname, 'dist'),
     },
     plugins: [
-        new DotEnv()
+        new DotEnv(),
+        new webpack.IgnorePlugin({ resourceRegExp: /^pg-native$/ })
+    ],
+    externals: [
+        nodeExternals()
     ]
 }
