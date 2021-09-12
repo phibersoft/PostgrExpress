@@ -79,59 +79,184 @@ This package generates an Rest API for PostgreSQL.
 ### Table Schema
 | Property        | Type           | Description | Required  |
 | :-------------: |:-------------:| :-----: | :-----:|
-| tableName      | string | PostgreSQL Table Name | * |
+| tableName      | string | PostgreSQL Table Name | ✅ |
 | routeName | string | Route name for express | Default: tableName |
-| primaryKey | string | Primary key for table | * |
-| update | object | post route/:id configuration | * |
-| insert | object | post route/ configuration | * |
-| select | object | get route & get route/:id configuration | - |
-| delete | object | delete route/:id configuration | - |
+| primaryKey | string | Primary key for table | ✅ |
+| update | [UpdateCommand](#command-update) | post route/:id configuration |✅ |
+| insert | [InsertCommand](#command-insert) | post route/ configuration | ✅ |
+| select | [SelectCommand](#command-select) | get route & get route/:id configuration | ❌ |
+| delete | [DeleteCommand](#command-delete) | delete route/:id configuration | ❌ |
 
 ### View Schema
 | Property        | Type           | Description | Required  |
 | :-------------: |:-------------:| :-----: | :-----:|
-| routeName      | string | Route name for express | * |
-| primaryKey | string | Primary key for table (must be with dot. "u.user_id") | * |
-| query | string | Actual sql query for view | * |
-| args | any[] | Query args | - |
-| select | object | get route & get route/:id configuration | - |
+| routeName      | string | Route name for express | ✅ |
+| primaryKey | string | Primary key for table (must be with dot. "u.user_id") | ✅ |
+| query | string | Actual sql query for view |✅ |
+| args | any[] | Query args | ❌ |
+| select | [SelectCommand](#command-select) | get route & get route/:id configuration | ❌ |
 
 ### Command Schema's (Select, Insert, Update, Delete)
 
-#### Select
+#### <a name="command-select"></a> Select
 | Property        | Type           | Description | Required  |
 | :-------------: |:-------------:| :-----: | :-----:|
-| before      |  async (id?: number):void | Before select request | - |
-| after | async (data?: any[]):void | After select request | - |
+| before      |  async (id?: number):void | Before select request | ❌ |
+| after | async (data?: any[]):void | After select request | ❌ |
 | columns | string[] | Select columns list | Default: "*" |
 
-#### Update
+#### <a name="command-update"></a> Update
 | Property | Type | Description | Required |
 | :---: | :---------: | :-----: | :-----: |
-| before | async (body: Object):Object | If you need to redefine body you can use this function. | -
-| after | async (data: any[]):void | Updated columns list | - |
-| fields | Field[] | Which columns will used for update | * |
-| idColumn | string | If you dont want to use table.primaryKey | - |
+| before | async (body: Object):Object | If you need to redefine body you can use this function. | ❌
+| after | async (data: any[]):void | Updated columns list | ❌ |
+| fields | [Field](#field)[] | Which columns will used for update | ✅ |
+| idColumn | string | If you dont want to use table.primaryKey | ❌ |
 
-#### Insert
+#### <a name="command-insert"></a> Insert
 | Property | Type | Description | Required |
 | :---: | :---------: | :-----: | :-----: |
-| before | async (body: Object):Object | If you need to redefine body you can use this function. | -
-| after | async (data: any[]):void | Inserted columns list | - |
-| fields | [Field](#field)[] | Which columns will used for insert | * |
+| before | async (body: Object):Object | If you need to redefine body you can use this function. | ❌ |
+| after | async (data: any[]):void | Inserted columns list | ❌ |
+| fields | [Field](#field)[] | Which columns will used for insert | ✅ |
 
-#### Delete
+#### <a name="command-delete"></a> Delete
 
 | Property | Type | Description | Required |
 | :---: | :---------: | :-----: | :-----: |
-| before | async (id: number):void | Before delete request | - |
-| after | async (id: number):void | After deleted success | - |
-| idColumn | string | If you dont want to use table.primaryKey | - |
+| before | async (id: number):void | Before delete request | ❌ |
+| after | async (id: number):void | After deleted success | ❌ |
+| idColumn | string | If you dont want to use table.primaryKey | ❌ |
 
 ### <a name="field"></a> Field
 
 | Property | Type | Description | Required |
 | :---: | :---------: | :-----: | :-----: |
-| name | string | Key of object | * |
+| name | string | Key of object | ✅ |
 | required | boolean | If this field required for insert/update | Default: false |
 
+### Pagination
+Select all route uses pagination default.
+Here are the querystring schema.
+
+| Key | Type | Description | Default |
+| :---: | :---: | :---: | :---: |
+| limit | number | Limits result count | 100 |
+| offset | number | Starts from | 0 |
+| orderby | string | Order column | table.primaryKey |
+| ordertype | 'ASC' or 'DESC' | Order type | 'DESC'
+
+## Example
+
+#### Insert tables to database
+```sql
+    CREATE TABLE users(
+       user_id integer SERIAL PRIMARY KEY,
+       username varchar(100)
+    );
+    
+    CREATE TABLE comments(
+       comment_id integer SERIAL PRIMARY KEY,
+       user_id integer,
+       content varchar(500),
+       data json
+    );
+```
+
+#### Define schemas in typescript
+
+```typescript
+  // Define fields for insert/update operations.
+import PostgrExpress from "./PostgrExpress";
+
+const userFields = [
+    {
+        name: 'username',
+        required: true,
+    }
+];
+const commentFields = [
+    {
+        name: 'content',
+        required: true,
+    },
+    {
+        name: 'user_id',
+        required: true,
+    }
+];
+
+// Define database config for PostgrExpress.
+const schema = {
+    tables: [
+        {
+            tableName: 'users',
+            primaryKey: 'user_id',
+            update: {
+                fields: userFields,
+                async after(updatedRows) {
+                    // You can do any stuff with updatedRows.
+                    console.log(`Updated row count: ${updatedRows}`);
+                },
+                async before(body) {
+                    // You can do any editing on body.
+                    // If you dont return edited body, this program will give error.
+                    return body;
+                }
+            },
+            insert: {
+                fields: userFields
+            }
+        },
+        {
+            tableName: 'comments',
+            routeName: 'custom_comments', // If you dont want to use /comments route.
+            update: {
+                fields: commentFields,
+            },
+            insert: {
+                fields: commentFields
+            }
+        }
+    ],
+    views: [
+        {
+            routeName: "user_comments",
+            primaryKey: "u.user_id",
+            query: `SELECT * FROM users u INNER JOIN comments c ON u.user_id = c.user_id `,
+            args: [],
+        },
+    ]
+};
+
+const pge = new PostgrExpress(db) // db is your Pg POOL!
+const route = pge.PrepareRoute({
+    database: schema,
+}); // route is express.Route now.
+
+// You can use route as any if you want.
+server.use(`/api`, route);
+
+// Done.
+```
+
+### Result
+| Method | Route | Description |
+| :---: | :---: | :---: |
+| GET | /api/users | Gets all users with pagination |
+| GET | /api/users/1 | Gets user where "user_id" = 1 |
+| POST | /api/users (content-type: application/json) | Inserts user with required key "username"
+| POST | /api/users/1 (content-type: application/json) | Updates user where "user_id" = 1
+| DELETE | /api/users/1 | Deletes user where "user_id" = 1 |
+||||
+| GET | /api/custom_comments | Gets all comments with pagination |
+| GET | /api/custom_comments/1 | Gets comment where "comment_id" = 1 |
+| POST | /api/custom_comments (content-type: application/json) | Inserts comment with required keys "user_id", "content"
+| POST | /api/custom_comments/1 (content-type: application/json) | Updates comment where "comment_id" = 1 |
+| DELETE | /api/custom_comments/1 | Deletes comment where "comment_id" = 1
+||||
+| GET | /api/view/user_comments | Gets user-comment join data |
+| GET | /api/view/user_comments/1 | Gets user-comment join data where "user_id" = 1 | 
+
+## Testing
+Writed tests for body handling and key checks.
